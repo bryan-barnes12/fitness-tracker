@@ -3,6 +3,10 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const cardioSchema = new Schema({
+  type: {
+    type: String,
+    required: "Enter an name"
+  },
   name: {
     type: String,
     required: "Enter an name"
@@ -14,10 +18,6 @@ const cardioSchema = new Schema({
   distance: {
     type: Number,
   },
-  date: {
-    type: Date,
-    default: Date.now()
-  }
 });
 
 const Cardio = mongoose.model("Cardio", cardioSchema);

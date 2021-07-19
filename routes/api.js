@@ -1,10 +1,21 @@
 const router = require("express").Router();
-const { Workout, Resistance, Cardio } = require('../models')
+const { Workout, Exercise, Resistance, Cardio } = require('../models')
 const db = require('../models')
 
 router.get('/api/workouts', async (req, res) => {
   try {
-    const workouts = await Workout.find({});
+    const workouts = await Workout.find({}).populate('exercises');
+    console.log(workouts);
+    res.json(workouts)
+  } catch (err) {
+    console.log(err)
+  }
+});
+
+router.get('/api/exercise', async (req, res) => {
+  try {
+    const workouts = await Exercise.find({});
+    console.log(workouts);
     res.json(workouts)
   } catch (err) {
     console.log(err)
@@ -12,7 +23,7 @@ router.get('/api/workouts', async (req, res) => {
 });
 
 router.post("/api/workouts", async ({ body }, res) => {
-  const newWorkout = await db.Workout.create(body);
+  const newWorkout = await Workout.create(body);
   res.json(newWorkout);
 });
 
@@ -20,17 +31,13 @@ router.post("/api/workouts", async ({ body }, res) => {
 // THIS IS IMPORTANT FOR LATER...
 router.put("/api/workouts/:id", async (req, res) => {
   try {
-    if (req.body.type === 'resistance') {
-      const newExercise = await Resistance.create(req.body);
-      console.log(newExercise);
-      await Workout.findOneAndUpdate({ _id: req.params.id }, { $push: { resistance: newExercise._id } }, { new: true })
-    }
-    if (req.body.type === 'cardio') {
-      const newExercise = await db.Cardio.create(req.body);
-      await Workout.findOneAndUpdate({ _id: req.params.id }, { $push: { cardio: newExercise._id } }, { new: true })
-    }
-    if (newExercise) {
-      res.json(newExercise);
+    const newExercise = await Exercise.create(req.body);
+    await Workout.findOneAndUpdate({ _id: req.params.id }, { $push: { exercises: newExercise._id } }, { new: true });
+    let updatedWorkout = await Workout.findOne({ _id: req.params.id }).populate('exercises');
+    await updatedWorkout.calculateTotalDuration()
+    updatedWorkout = await Workout.findOneAndUpdate({ _id: req.params.id }, { $set: { totalDuration: updatedWorkout.totalDuration } }, { new: true });
+    if (updatedWorkout) {
+      res.json(updatedWorkout);
     }
   } catch (err) {
     res.status(400).json(err)

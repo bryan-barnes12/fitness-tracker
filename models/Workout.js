@@ -3,19 +3,25 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const workoutSchema = new Schema({
-  resistance: [
+  exercises: [
     {
       type: Schema.Types.ObjectId,
-      ref: "Resistance"
+      ref: "Exercise"
     }
   ],
-  cardio: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Cardio"
-    }
-  ]
+  day: {
+    type: Date,
+    default: Date.now
+  },
+  totalDuration: Number
 });
+
+workoutSchema.methods.calculateTotalDuration = function() {
+  const durations = this.exercises.map(el => el.duration);
+  this.totalDuration = durations.reduce((a, b) => a + b);
+  return this.totalDuration;
+};
+
 
 const Workout = mongoose.model("Workout", workoutSchema);
 

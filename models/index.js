@@ -3,5 +3,6 @@
 module.exports = {
   Workout: require("./Workout"),
   Cardio: require("./Cardio"),
-  Resistance: require("./Resistance")
+  Resistance: require("./Resistance"),
+  Exercise: require("./Exercise")
 };
