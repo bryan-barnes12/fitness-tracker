@@ -10,128 +10,130 @@ mongoose.connect('mongodb://localhost/workout', {
 const workoutSeed = [
   {
     day: new Date(new Date().setDate(new Date().getDate() - 9)),
-    exercises: [
-      {
-        type: 'resistance',
-        name: 'Bicep Curl',
-        duration: 20,
-        weight: 100,
-        reps: 10,
-        sets: 4,
-      },
-    ],
   },
   {
     day: new Date(new Date().setDate(new Date().getDate() - 8)),
-    exercises: [
-      {
-        type: 'resistance',
-        name: 'Lateral Pull',
-        duration: 20,
-        weight: 300,
-        reps: 10,
-        sets: 4,
-      },
-    ],
   },
   {
     day: new Date(new Date().setDate(new Date().getDate() - 7)),
-    exercises: [
-      {
-        type: 'resistance',
-        name: 'Push Press',
-        duration: 25,
-        weight: 185,
-        reps: 8,
-        sets: 4,
-      },
-    ],
   },
   {
     day: new Date(new Date().setDate(new Date().getDate() - 6)),
-    exercises: [
-      {
-        type: 'cardio',
-        name: 'Running',
-        duration: 25,
-        distance: 4,
-      },
-    ],
   },
   {
     day: new Date(new Date().setDate(new Date().getDate() - 5)),
-    exercises: [
-      {
-        type: 'resistance',
-        name: 'Bench Press',
-        duration: 20,
-        weight: 285,
-        reps: 10,
-        sets: 4,
-      },
-    ],
   },
   {
     day: new Date(new Date().setDate(new Date().getDate() - 4)),
-    exercises: [
-      {
-        type: 'resistance',
-        name: 'Bench Press',
-        duration: 20,
-        weight: 300,
-        reps: 10,
-        sets: 4,
-      },
-    ],
   },
   {
     day: new Date(new Date().setDate(new Date().getDate() - 3)),
-    exercises: [
-      {
-        type: 'resistance',
-        name: 'Quad Press',
-        duration: 30,
-        weight: 300,
-        reps: 10,
-        sets: 4,
-      },
-    ],
   },
   {
     day: new Date(new Date().setDate(new Date().getDate() - 2)),
-    exercises: [
-      {
-        type: 'resistance',
-        name: 'Bench Press',
-        duration: 20,
-        weight: 300,
-        reps: 10,
-        sets: 4,
-      },
-    ],
   },
   {
     day: new Date(new Date().setDate(new Date().getDate() - 1)),
-    exercises: [
-      {
-        type: 'resistance',
-        name: 'Military Press',
-        duration: 20,
-        weight: 300,
-        reps: 10,
-        sets: 4,
-      },
-    ],
   },
 ];
 
-db.Workout.deleteMany({})
-  .then(() => db.Workout.collection.insertMany(workoutSeed))
-  .then((data) => {
-    console.log(data.result.n + ' records inserted!');
-    process.exit(0);
-  })
-  .catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
+const exerciseSeed = [
+  {
+    type: 'resistance',
+    name: 'Bicep Curl',
+    duration: 20,
+    weight: 100,
+    reps: 10,
+    sets: 4,
+  },  
+  {
+    type: 'resistance',
+    name: 'Lateral Pull',
+    duration: 20,
+    weight: 300,
+    reps: 10,
+    sets: 4,
+  },  
+  {
+    type: 'resistance',
+    name: 'Push Press',
+    duration: 25,
+    weight: 185,
+    reps: 8,
+    sets: 4,
+  },  
+  {
+    type: 'cardio',
+    name: 'Running',
+    duration: 25,
+    distance: 4,
+  },  
+  {
+    type: 'resistance',
+    name: 'Bench Press',
+    duration: 20,
+    weight: 285,
+    reps: 10,
+    sets: 4,
+  },  
+  {
+    type: 'resistance',
+    name: 'Bench Press',
+    duration: 20,
+    weight: 300,
+    reps: 10,
+    sets: 4,
+  },  
+  {
+    type: 'resistance',
+    name: 'Quad Press',
+    duration: 30,
+    weight: 300,
+    reps: 10,
+    sets: 4,
+  },  
+  {
+    type: 'resistance',
+    name: 'Bench Press',
+    duration: 20,
+    weight: 300,
+    reps: 10,
+    sets: 4,
+  },  
+  {
+    type: 'resistance',
+    name: 'Military Press',
+    duration: 20,
+    weight: 300,
+    reps: 10,
+    sets: 4,
+  },  
+];  
+
+
+async function seedDb(workoutSeed, exerciseSeed) {
+  await db.Exercise.deleteMany({});
+  await db.Workout.deleteMany({});
+
+  const workouts = await db.Workout.collection.insertMany(workoutSeed);
+  const workoutIds = [];
+  for (const [key, value] of Object.entries(workouts.insertedIds)) {
+    workoutIds.push(value);
+  }
+  const exercises = await db.Exercise.collection.insertMany(exerciseSeed);
+  const exerciseIds = [];
+  for (const [key, value] of Object.entries(exercises.insertedIds)) {
+    exerciseIds.push(value);
+  }
+  if (workoutIds.length === exerciseIds.length) {
+    for (let i = 0; i < workoutIds.length; i++) {
+      await db.Workout.findOneAndUpdate({ _id: workoutIds[i] }, { $push: { exercises: exerciseIds[i] } }, { new: true });
+      let updatedWorkout = await db.Workout.findOne({ _id: workoutIds[i] }).populate('exercises');
+      await updatedWorkout.calculateTotalDuration()
+      updatedWorkout = await db.Workout.findOneAndUpdate({ _id: workoutIds[i] }, { $set: { totalDuration: updatedWorkout.totalDuration } }, { new: true });
+      }
+  }
+  console.log('Database seeded')
+}
+
+seedDb(workoutSeed, exerciseSeed)

@@ -1,11 +1,10 @@
 const router = require("express").Router();
-const { Workout, Exercise, Resistance, Cardio } = require('../models')
+const { Workout, Exercise } = require('../models')
 const db = require('../models')
 
 router.get('/api/workouts', async (req, res) => {
   try {
     const workouts = await Workout.find({}).populate('exercises');
-    console.log(workouts);
     res.json(workouts)
   } catch (err) {
     console.log(err)
@@ -15,7 +14,6 @@ router.get('/api/workouts', async (req, res) => {
 router.get('/api/exercise', async (req, res) => {
   try {
     const workouts = await Exercise.find({});
-    console.log(workouts);
     res.json(workouts)
   } catch (err) {
     console.log(err)
@@ -28,7 +26,6 @@ router.post("/api/workouts", async ({ body }, res) => {
 });
 
 
-// THIS IS IMPORTANT FOR LATER...
 router.put("/api/workouts/:id", async (req, res) => {
   try {
     const newExercise = await Exercise.create(req.body);
@@ -44,28 +41,13 @@ router.put("/api/workouts/:id", async (req, res) => {
   }
 })
 
-// app.post("/submit", ({ body }, res) => {
-//   db.Note.create(body)
-//     .then(({ _id }) => db.User.findOneAndUpdate({}, { $push: { notes: _id } }, { new: true }))
-//     .then(dbUser => {
-//       res.json(dbUser);
-//     })
-//     .catch(err => {
-//       res.json(err);
-//     });
-// });
-
-
-//---------------------------------------
-
-// This is the beginnings of the put route. Find out how to handle the params in the url.
-// router.put("/api/workouts", async ({ body }, res) => {
-//   try {
-//     const newWorkout = await Workout.create(body);
-//     res.json(newWorkout);
-//   } catch (err) {
-//     res.status(400).json(err);
-//   }
-// });
+router.get('/api/workouts/range', async (req, res) => {
+  try {
+    const workouts = await Workout.find({}).limit(7).sort({ day: -1 }).populate('exercises');
+    res.json(workouts)
+  } catch (err) {
+    console.log(err)
+  }
+});
 
 module.exports = router;
