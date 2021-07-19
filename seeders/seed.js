@@ -112,28 +112,32 @@ const exerciseSeed = [
 
 
 async function seedDb(workoutSeed, exerciseSeed) {
-  await db.Exercise.deleteMany({});
-  await db.Workout.deleteMany({});
-
-  const workouts = await db.Workout.collection.insertMany(workoutSeed);
-  const workoutIds = [];
-  for (const [key, value] of Object.entries(workouts.insertedIds)) {
-    workoutIds.push(value);
+  try {
+    await db.Exercise.deleteMany({});
+    await db.Workout.deleteMany({});
+  
+    const workouts = await db.Workout.collection.insertMany(workoutSeed);
+    const workoutIds = [];
+    for (const [key, value] of Object.entries(workouts.insertedIds)) {
+      workoutIds.push(value);
+    }
+    const exercises = await db.Exercise.collection.insertMany(exerciseSeed);
+    const exerciseIds = [];
+    for (const [key, value] of Object.entries(exercises.insertedIds)) {
+      exerciseIds.push(value);
+    }
+    if (workoutIds.length === exerciseIds.length) {
+      for (let i = 0; i < workoutIds.length; i++) {
+        await db.Workout.findOneAndUpdate({ _id: workoutIds[i] }, { $push: { exercises: exerciseIds[i] } }, { new: true });
+        let updatedWorkout = await db.Workout.findOne({ _id: workoutIds[i] }).populate('exercises');
+        await updatedWorkout.calculateTotalDuration()
+        updatedWorkout = await db.Workout.findOneAndUpdate({ _id: workoutIds[i] }, { $set: { totalDuration: updatedWorkout.totalDuration } }, { new: true });
+        }
+    }
+    console.log('Database seeded')
+  } catch (err) {
+    console.log(err);
   }
-  const exercises = await db.Exercise.collection.insertMany(exerciseSeed);
-  const exerciseIds = [];
-  for (const [key, value] of Object.entries(exercises.insertedIds)) {
-    exerciseIds.push(value);
-  }
-  if (workoutIds.length === exerciseIds.length) {
-    for (let i = 0; i < workoutIds.length; i++) {
-      await db.Workout.findOneAndUpdate({ _id: workoutIds[i] }, { $push: { exercises: exerciseIds[i] } }, { new: true });
-      let updatedWorkout = await db.Workout.findOne({ _id: workoutIds[i] }).populate('exercises');
-      await updatedWorkout.calculateTotalDuration()
-      updatedWorkout = await db.Workout.findOneAndUpdate({ _id: workoutIds[i] }, { $set: { totalDuration: updatedWorkout.totalDuration } }, { new: true });
-      }
-  }
-  console.log('Database seeded')
 }
 
 seedDb(workoutSeed, exerciseSeed)
